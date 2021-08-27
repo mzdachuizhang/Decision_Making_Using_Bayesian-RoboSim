@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="jsmile-1.6.0">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/jsmile/jsmile-1.6.0-MacOS/jsmile-1.6.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
