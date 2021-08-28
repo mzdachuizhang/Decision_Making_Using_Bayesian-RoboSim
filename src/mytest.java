@@ -1,7 +1,9 @@
 import smile.*;
 import smile.Network;
 
-
+/*
+    This function is used to test the the jsmile
+ */
 public class mytest {
 
     public static void run() {

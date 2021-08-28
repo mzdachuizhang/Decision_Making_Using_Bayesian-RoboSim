@@ -219,6 +219,7 @@ public class Test {
 
 
     public static void main(String[] args) {
+        // The license need to be updated after 2022-02-23
         new smile.License(
                 "SMILE LICENSE 6bc07a0d 3773c5d1 49bc60e1 " +
                         "THIS IS AN ACADEMIC LICENSE AND CAN BE USED " +
