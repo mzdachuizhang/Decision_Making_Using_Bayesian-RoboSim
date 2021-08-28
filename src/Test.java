@@ -1,12 +1,17 @@
 import smile.Network;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 public class Test {
 
     HashSet<State> StateSet = new HashSet<>();
+    HashSet<State> JunctionSet = new HashSet<>();
     HashSet<Transition> TransitionSet = new HashSet<>();
+    HashSet<Transition> TransitionCompareSet = new HashSet<>();
+    HashMap<State,String> StateIDMap = new HashMap<>();
     State state, next_state;
     Env env;
     Decision decision;
@@ -16,16 +21,22 @@ public class Test {
     public Test() {
     }
 
-
     public void work(Data data, Boolean isTeamFirst) {
+        state = new State();
+
         if (isTeamFirst) { //data是一组数据中的第一条，表示此场景刚开始
             //System.out.println("[work]: isTeamFirst");
 
             state = data.ego_state;
             if (!StateSet.contains(state)) {
                 //System.out.println("[work]: !StateSet.contains(state)");
-                state.setS_id(StateSet.size()+1+"");
+                String temp_id = StateSet.size()+1+"";
+                StateIDMap.put(state, temp_id);
+                state.setS_id(temp_id);
                 StateSet.add(state);
+            }
+            else {
+                state.setS_id(StateIDMap.get(state));
             }
 
             Transition trans0 = new Transition(init, state, null, null);
@@ -37,8 +48,9 @@ public class Test {
             //System.out.println("[work]: isTeamFirst false");
             state = next_state;
             //System.out.println("[work]: state.getEgo_speed():"+state.getEgo_speed());
-
         }
+
+        next_state = new State();
 
         env = data.env;
         decision = Bayesian(state, env);
@@ -51,16 +63,29 @@ public class Test {
                 // 决策出错时的安全验证结果 （贝叶斯算法错？ or 贝叶斯转RoboSim错？）
             }
             else {
-
              */
-            next_state.setS_id(StateSet.size()+1+"");
+            String temp_id = StateSet.size()+1+"";
+            StateIDMap.put(next_state, temp_id);
+            next_state.setS_id(temp_id);
+//            next_state.setS_id(StateSet.size()+1+"");
             StateSet.add(next_state);
-
+        }
+        else {
+            next_state.setS_id(StateIDMap.get(next_state));
         }
 
-        State j = new State(state.getS_id()+"_"+next_state.getS_id(), true);
+
+        Transition trans = new Transition(state, next_state, env, decision);
+        if (TransitionCompareSet.contains(trans)) {
+            return;
+        } else {
+            TransitionCompareSet.add(trans);
+        }
+
+//        State j = new State(state.getS_id()+"_"+next_state.getS_id(), true);
+        State j = new State(JunctionSet.size()+1+"", true);
         //System.out.println("[work]: new j_id = "+j.getS_id());
-        StateSet.add(j);
+        JunctionSet.add(j);
         Transition trans1 = new Transition(state, j, env, decision);
         Transition trans2 = new Transition(j, next_state, env, decision);
         if (!TransitionSet.contains(trans1)) {
@@ -242,7 +267,7 @@ public class Test {
         Test test = new Test();
 
         try {
-            BufferedReader reader = new BufferedReader(new FileReader("data.csv"));
+            BufferedReader reader = new BufferedReader(new FileReader("Data.csv"));
             reader.readLine(); reader.readLine(); //表头标题信息处理
             String line;
             String data_id="";
@@ -300,21 +325,23 @@ public class Test {
         //todo 【改】
         try {
             File f = new File("output.txt");
-            FileWriter fw = new FileWriter(f, true);
+            FileWriter fw = new FileWriter(f);
+            fw.write("");
             BufferedWriter bw = new BufferedWriter(fw);
             PrintWriter pw = new PrintWriter(bw);
 
-            pw.println("initial i0");
+            pw.println("\tinitial i0");
 
             // 声明所有junc
-            for (State st : test.StateSet) {
+            for (State st : test.JunctionSet) {
                 if (st.getJunc())
-                    pw.println("junction j_"+st.getS_id());
+                    pw.println("\tjunction j_"+st.getS_id());
             }
             // 声明所有state
             for (State st : test.StateSet) {
                 if (!st.getJunc())
-                    pw.println("State s_"+st.getS_id()+" {\n\n}");
+//                    pw.println("\tState s_"+st.getS_id()+" {"+ st.getEgo_speed() + st.getEgo_angle() +"}");
+                    pw.println("\tState s_"+st.getS_id()+" { }");
             }
 
             //init -> state
@@ -322,11 +349,11 @@ public class Test {
             for (Transition trans : test.TransitionSet) {
                 if (trans.getSource().getInit()){
                     String s_id = trans.getTarget().getS_id();
-                    System.out.println("[main:print]: init->s_id trans: "+s_id);
+//                    System.out.println("[main:print]: init->s_id trans: "+s_id);
 
-                    pw.println("transition i0_s_"+s_id+" {\n" +
-                            "\tfrom i0\n" +
-                            "\tto s_"+s_id+"\n}");
+                    pw.println("\ttransition i0_s_"+s_id+" {\n" +
+                            "\t\tfrom i0\n" +
+                            "\t\tto s_"+s_id+"\n\t}");
                 }
             }
 
@@ -335,11 +362,11 @@ public class Test {
                 if (trans.getTarget().getJunc()) {
                     String id = trans.getSource().getS_id();
                     String j_id = trans.getTarget().getS_id();
-                    pw.println("transition s_"+id+"_to_j_"+j_id+" {\n" +
-                            "\tfrom s_"+id+"\n" +
-                            "\tto j_"+j_id+"\n" +
-                            "\t"+trans.conditionPrint()+"\n" +
-                            "\t"+trans.actionPrint()+"\n}");
+                    pw.println("\ttransition s_"+id+"_to_j_"+j_id+" {\n" +
+                            "\t\tfrom s_"+id+"\n" +
+                            "\t\tto j_"+j_id+"\n" +
+                            "\t\t"+trans.conditionPrint()+"\n" +
+                            "\t\t"+trans.actionPrint()+"\n\t}");
                 }
             }
 
@@ -348,21 +375,24 @@ public class Test {
                 if (trans.getSource().getJunc()) {
                     String j_id = trans.getSource().getS_id();
                     String id = trans.getTarget().getS_id();
-                    pw.println("transition j_"+j_id+"_to_s_"+id+" {\n" +
-                            "\tfrom j_"+j_id+"\n" +
-                            "\tto s_"+id+"\n" +
-                            "\texec\n}");
+                    pw.println("\ttransition j_"+j_id+"_to_s_"+id+" {\n" +
+                            "\t\tfrom j_"+j_id+"\n" +
+                            "\t\tto s_"+id+"\n" +
+                            "\t\texec\n\t}");
                 }
             }
 
             pw.flush();
             pw.close();
 
+//            StateSet.clear();
+//            TransitionSet.clear();
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
+        
     }
 }
 

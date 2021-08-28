@@ -1,4 +1,4 @@
-
+import java.util.Objects;
 
 public class State {
     // ego_state
@@ -19,7 +19,6 @@ public class State {
     private String is_safe_f1;
 
      */
-
 
     public State() {
     }
@@ -74,6 +73,25 @@ public class State {
         this.ego_angle = ego_angle;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        State state = (State) o;
+        if (!state.isJunc) {
+            return Objects.equals(ego_speed, state.ego_speed) &&
+                    Objects.equals(ego_angle, state.ego_angle);
+        } else {
+            return Objects.equals(s_id, state.s_id);
+        }
+    }
 
+    @Override
+    public int hashCode() {
+        if (!isJunc) {
+            return Objects.hash(ego_speed, ego_angle);
+        }
+        else return Objects.hash(s_id);
 
+    }
 }

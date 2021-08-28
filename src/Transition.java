@@ -1,3 +1,5 @@
+import java.util.Objects;
+
 public class Transition {
 
     private State source;
@@ -82,5 +84,20 @@ public class Transition {
         return sb.toString();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Transition that = (Transition) o;
+        return Objects.equals(source, that.source) &&
+                Objects.equals(target, that.target) &&
+                Objects.equals(condition, that.condition) &&
+                Objects.equals(decision, that.decision);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(source, target, condition, decision);
+    }
 
 }
